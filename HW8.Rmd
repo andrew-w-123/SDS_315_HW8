@@ -147,6 +147,7 @@ coef(lm_spain)
 Let's do something extra by fitting our given data *before* taking our bootstrapped samples. As one can see from the new graph, we have made the relationship "days_since_first_death" vs. "log(deaths)," which is fitting an exponential model to a linear model. Our two Linear Regression Models, in the model of log(y) = log(a) + bx, are as given (where b is represented by **growth rate**):
 
 **Italy:** log(y) = 1.0186 + 0.1832x
+
 **Spain:** log(y) = 0.4652 + 0.2762x
 
 ```{r echo=FALSE}
@@ -179,12 +180,12 @@ The estimated growth rate for Spain is **0.283** while its 95% Confidence Interv
 
 # "Rule of 70" to calculate a doubling time, divide 70 by the growth rate, expressed as a percentage - 70/r
 
-print("Calculating doubling time for Italy")
+print("Manually calculating doubling time for Italy from existing values")
 70 / 19.26
 70 / 15.94
 70 / 20.90
 
-print("Calculating doubling time for Spain")
+print("CManually calculating doubling time for Spain from existing values")
 70 / 28.33
 70 / 23.35
 70 / 31.74
