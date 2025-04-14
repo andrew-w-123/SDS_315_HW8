@@ -1,0 +1,250 @@
+---
+title: "SDS 315 - HW 8"
+author: "Andrew Wei"
+date: "2025-04-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## SDS 315 - Homework 8
+
+Name: Andrew Wei
+
+EID: aw42559
+
+GitHub Repository: 
+
+```{r include=FALSE}
+
+# Importing Datasets and Reading Files
+
+library(tidyverse)
+library(mosaic)
+library(ggplot2)
+
+creatinine <- read.csv('creatinine.csv')
+covid <- read.csv('covid.csv')
+milk <- read.csv('milk.csv')
+
+```
+
+Note: Because this assignment uses bootstrapping, the numbers in the write-up may vary from the numbers outputted by R.
+
+# Problem 1 - Regression Warm Up
+
+```{r echo=FALSE}
+# Visualizing Data
+ggplot(creatinine) + geom_point(aes(x=age, y=creatclear)) + geom_smooth(aes(x=age, y=creatclear), method='lm') + labs(title="Age vs. Creatinine Clearance Rate", x="Age (Years)", y="Creatinine Clearance Rate (mL/min)")
+
+# Getting equation
+model_creatclear = lm(creatclear ~ age, data=creatinine)
+coef(model_creatclear)
+
+```
+
+Let's first visualize this data and find our regression line. The graph displays all the data points in the "creatinine.csv" dataset. After performing a Linear Regression, we find that our regression line is: **y = 147.813 - 0.620(x)** where y is denoted by someone's expected creatinine clearance rate (mL/minute) and x is denoted by someone's age (in years).
+
+Thus, our resulting Regression Equation is:
+
+Expected Creatinine Rate = 147.813 - 0.620(age), or y^ = 147.813 - 0.620x.
+
+## A)
+
+```{r echo=FALSE}
+
+# Expected creatinine clearance rate for a 55-year old
+print("Expected rate for 50-year-old")
+147.813 - 0.620*55
+
+```
+
+The *expected* creatinine clearance rate for a 55-year-old is around **113.713 mL/min.** We found this answer by plugging in 55 (denoted for one's age) into the Linear Regression model that we found earlier. 
+
+147.813 - 0.620(55) = 113.713.
+
+## B)
+
+For every year older, the expected creatinine clearance rate **decreases** by 0.620 mL/min on average. We found this answer by taking the slope of our Linear Regression model. by looking at the equation: y = 147.813 - 0.620x, we can tell that y approximately decreases by 0.620 each time x (or age) increases by 1. 
+
+## C) 
+
+```{r echo=FALSE}
+
+# Expected creatinine clearance rate of a 40-year-old
+expected_forty = 147.813 - 0.620*40
+print("Expected Rate for 40-year-old") 
+print(expected_forty)
+
+print("40-year-old Residual")
+135 - expected_forty
+
+# Expected creatinine clearance rate of a 60-year-old
+expected_sixty = 147.813 - 0.620*60
+print("Expected Rate for 60-year-old")
+print(expected_sixty)
+
+print("60-year-old Residual")
+112 - expected_sixty
+
+```
+
+In order to find whether a 40-year-old with a rate of 135 or a 60-year-old with a rate of 112 is healthier (higher), we need to compare the **residuals** for both of these subjects.
+
+Here are our calculations for the residuals of both the 40-year-old and 60-year-old
+
+Residual = Actual - Expected
+
+40-year old Expected Creatinine Rate: 147.813 - 0.620(40) = 123.013
+
+40-year old Residual = 135 - 123.013 = **11.987**
+
+60-year old Expected Creatinine Rate: 147.813 - 0.620(60) = 110.613
+
+60-year old Residual = 112 - 110.6 = **1.387**
+
+Because 11.987 > 1.387, we can clearly tell that the 40-year-old has a **higher residual** and thus is "healthier" and has a higher creatinine clearance rate in relative with age. Because it was simply unfair to directly compare a 40- and 60-year old's, we had to compare the two's residuals, or comparing their creatinine clearance rates with the expected rate of **someone their age.** After this comparison, we were able to conclude that the 40-year-old had a healthier creatinine clearance rate. 
+
+# Problem 2: Modeling Disease Growth
+
+Fit an exponential growth model using a linear regression for **log y versus x**
+
+```{r echo=FALSE}
+
+# Let's filter the data first
+
+italy_covid = covid %>%
+  filter(country == "Italy")
+
+spain_covid = covid %>%
+  filter(country == "Spain")
+
+```
+
+```{r echo=FALSE}
+
+ggplot(covid) + geom_line(aes(x=days_since_first_death, y=deaths, color=country)) + labs(title="COVID-19 Deaths Over Time", x="Days Since First Death", y="Number of Deaths")
+
+```
+
+To get started, I filtered the dataset into two pieces of data - one that only contains data from Italy and the other that only contains data from Spain. Using the original dataset, I was also able to create a line-graph that reported daily deaths over time for each country. as one can see, this relationship is **non-linear** and we need to fit it as an **exponential growth model.**
+
+```{r echo=FALSE}
+# Fitting exponential growth to Linear Model
+ggplot(covid) + geom_line(aes(x=days_since_first_death, y=log(deaths), color=country)) + geom_abline(intercept = 1.018602, slope = 0.183218, color = 'black') + geom_abline(intercept=0.4652173, slope=0.2762447, color='black') + labs(x="Days Since First Death", y="log(Number of Deaths)")
+
+lm_italy = lm(log(deaths) ~ days_since_first_death, data=italy_covid)
+coef(lm_italy)
+
+lm_spain = lm(log(deaths) ~ days_since_first_death, data=spain_covid)
+coef(lm_spain)
+
+# This is "fitting our model using a logarithmic scale" to make it log(y) vs. x
+```
+
+Let's do something extra by fitting our given data *before* taking our bootstrapped samples. As one can see from the new graph, we have made the relationship "days_since_first_death" vs. "log(deaths)," which is fitting an exponential model to a linear model. Our two Linear Regression Models, in the model of log(y) = log(a) + bx, are as given (where b is represented by **growth rate**):
+
+**Italy:** log(y) = 1.0186 + 0.1832x
+**Spain:** log(y) = 0.4652 + 0.2762x
+
+```{r echo=FALSE}
+
+# Let's try bootstrapping and finding the estimate / confidence interval for the estimated growth rate and doubling time of Spain and Italy!
+
+boot_lm_italy = do(10000)*lm(log(deaths) ~ days_since_first_death, data=mosaic::resample(italy_covid))
+
+boot_lm_spain = do(10000)*lm(log(deaths) ~ days_since_first_death, data=mosaic::resample(spain_covid))
+
+```
+
+Because it would not make sense to draw a conclusion with one set of data, we complete 10,000 Bootstrapped Monte Carlo simulations for both Italy and Spain and calculated the Linear Regression for log(deaths) vs. days_since_first_death for each particular bootstrapped sample. From this, we are able to calculate the Confidence Interval for each country's expected growth rate and doubling time. 
+
+```{r echo=FALSE}
+
+confint(boot_lm_italy, level=0.95)
+
+confint(boot_lm_spain, level=0.95)
+
+# In the equation log(y) = log(a) + bx -> a represents the initial model value of y; b represents growth rate; y represents deaths; x represents days since first death
+
+```
+
+The estimated growth rate for Italy is **0.193** while its 95% Confidence Interval falls within the rate of **(0.159, 0.209).** This means we would expect COVID Deaths in Italy to have a growth rate of around 19.3%. 
+
+The estimated growth rate for Spain is **0.283** while its 95% Confidence Interval falls within the rate of **(0.233, 0.317).** This means we would expect COVID Deaths in Spain to have a growth rate of around 28.3%. 
+
+```{r echo=FALSE}
+
+# "Rule of 70" to calculate a doubling time, divide 70 by the growth rate, expressed as a percentage - 70/r
+
+print("Calculating doubling time for Italy")
+70 / 19.26
+70 / 15.94
+70 / 20.90
+
+print("Calculating doubling time for Spain")
+70 / 28.33
+70 / 23.35
+70 / 31.74
+
+```
+
+In order to calculate one's doubling time, we use the "Rule of 70," which basically states that one's doubling time is equivalent to 70/r, where r = rate as a percentage. Let's make some calculations based on our estimated growth rates. 
+
+Rounded to the nearest tenth of a day, the expected doubling time for Italy is **3.6 days** while its 95% bootstrapped Confidence Interval is denoted by **(3.3, 4.4)** days. 
+
+For Spain, the expected doubling time is **2.5 days** while its 95% bootstrapped Confidence Interval is denoted by **(2.2, 3.0)** days. 
+
+By looking at both estimated growth rate and doubling time of Italy and Spain, we can see that in terms of deaths, Spain was more affected as compared to Italy. 
+
+# Problem 3: Price Elasticity of Demand
+
+```{r echo=FALSE}
+
+# Economists' power-law model is Q = KP^b where P is price, Q is quantity demanded by consumers at that price, and b is the price elasticity of demand ... 
+
+# Q = KP^b
+# logQ = logK + blogP
+
+# It is a log(Q) vs. log(p) relationship
+
+# Let's first display this data... 
+
+ggplot(milk) + geom_point(aes(x=price, y=sales)) + labs(title="Price vs. Sale of Milk", x="Price of Milk", y="Number willing to Purchase Milk")
+
+```
+
+```{r echo=FALSE}
+
+# It looks like the relationship may not necessarily be linear! Let's fit the equation in terms of log(y) and x
+
+ggplot(milk) + geom_point(aes(x=log(price), y=log(sales))) + geom_abline(intercept = 4.720604, slope = -1.618578, color = 'red') + labs(x="log(Price of Milk)", y="log(Number willing to Purchase)")
+
+lm_milk = lm(log(sales) ~ log(price), data=milk)
+coef(lm_milk)
+
+```
+
+Given this data, let's first create a graph of the dataset (shown in the top graph). 
+
+Based on the Economists' Power-Law Model, Q = KP^b where P is price, Q is quantity demanded at the particular price, and b is the price elasticity of demand, we need to use a **Power Model** to display this data. Thus, in the second graph, we found its **Linear Regression Model** (intercept / coefficient shown) in terms of log(price) and log(sales)
+
+Q = KP^b can be re-written as **log(Q) = log(K) + blog(P)**. This means that our Linear Regression Model will be in terms of log(Q) vs. log(P). 
+
+```{r echo=FALSE}
+
+boot_lm_milk = do(10000)*lm(log(sales) ~ log(price), data=mosaic::resample(milk))
+
+```
+
+```{r echo=FALSE}
+
+confint(boot_lm_milk, level=0.95)
+
+```
+
+Now let's find the estimated price elasticity of the demand for milk in this context! In order to do this, we performed 10,000 Bootstrapped Monte Carlo Simulations, each time taking the Linear Regression of log(sales) vs. log(price) of that particular sample. Recall that because this is a Power Law, our relationship is log(sales) vs. log(price). From this, we are able to create a 95% Bootstrapped Confidence Interval and find the estimated price elasticity for milk. 
+
+Our estimated price elasticity of demand for milk is **-1.594** while our 95% bootstrapped confidence interval falls between **(-1.771, -1.457)**. Through our observations, we can see that the demand for milk decreases as the price increases, meaning that it could indicate that milk has a **higher elasticity.**
